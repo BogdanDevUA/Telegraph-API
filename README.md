@@ -4,7 +4,7 @@
 
 ## Examples
 <details>
-  <summary>Click to see some basic examples</summary>
+  <summary>Client</summary>
 
 ### Simple Client
 
@@ -12,14 +12,37 @@
 from telegraph_api import Client, Poster
 
 with Client("Alex") as client:
-	poster = Poster(client)
+	  poster = Poster(client)
 
-post = poster.create_post(
-    "Simple Page", 
-    "It's simple page in <b>Telegraph</b> with use <b>HTML</b>!")
+async def main():
+    post = await poster.create_post(
+        "Simple Page", 
+        "It's simple page in <b>Telegraph</b> with use <b>HTML</b>!")
 
-print(post.text)
+    print(post.text)
 
+poster.run(main())
 # Output: It's simple page in <b>Telegraph</b> with use <b>HTML</b>!
+```
+</details>
+
+<details>
+  <summary>Poster</summary>
+  
+### Page downloader
+
+```python
+from telegraph_api import Client, Poster
+from telegraph_api.types import Post
+
+client = Client("Alex")
+poster = Poster(client)
+
+page = "https://telegra.ph/Simple-page-02-10"
+
+async def main(page: str) -> Post:
+  return await poster.get_page(page)
+
+poster.run(main(page))
 ```
 </details>

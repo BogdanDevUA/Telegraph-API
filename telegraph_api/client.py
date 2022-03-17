@@ -1,15 +1,18 @@
 from aiohttp import ClientSession, ClientTimeout
-from . import api
+from .api import api, BaseSite
 from typing import Any, Dict, Optional, Any, Union
 from asyncio import AbstractEventLoop as Loop
 from contextlib import contextmanager
 #from urllib.parse import urlencode
 from secrets import token_hex
+from .utils import baseObject
+import asyncio
 
-class Client:
+class Client(baseObject):
 	def __init__(self, 
 				name: str, 
 				short_name: Optional[str]=None, *, 
+				author_url: str=None,
 				save_data: bool=True,
 				loop: Optional[Loop]=None,
 				timeout: Union[ClientTimeout, int]=10,
@@ -20,6 +23,7 @@ class Client:
 		Initialise Client
 		:param name: String
 		:param short_name: :obj:`Optional[str]`
+		:param author_url: String
 		:param save_data: Boolean
 		:param loop: :obj:`Optional[AbstractEventLoop]`
 		:param timeout: :obj:`Union[ClientTimeout, int]`
@@ -29,104 +33,123 @@ class Client:
 		if not isinstance(name, str):
 			raise TypeError(f"name must be type str, not {type(name).__name__}")
 
-		if not name.istitle():
-			name = name.title()
-
-		self.name = name
-		self.short_name = short_name
-		if not isinstance(timeout, ClientTimeout):
-			timeout = ClientTimeout(total=timeout)
-
-		self.timeout = timeout
-
 		if not isinstance(loop, Loop):
 			raise TypeError(f"loop must be type AbstractEventLoop, not  {type(loop).__name__}")
 
+		if not isinstance(timeout, ClientTimeout):
+			timeout = ClientTimeout(total=timeout)
+
+		self.name = name
+		self.short_name = short_name
+
+		self.timeout = timeout
 		self.hash = token_hex(5)
 
+		if not loop:
+			loop = asyncio.get_event_loop()
+
+		self.loop = loop
 		self.session = ClientSession(
-				api.Base, 
-				loop=loop, 
+				BaseSite, 
+				loop=self.loop, 
 				timeout=self.timeout
 		)
-		print("Session created")
+		print("Session created\n")
 		self.conf = conf
 		"""
 		Client example:
 
-		>>> with Client("Alex", **config) as client:
+		>>> with Client("Alex") as client:
 		... 	poster = Poster(client)
 		...		post = poster.create_post(client["post1"])
 		...		print(post.text)
 		...
+		Session created
+
+		Account "Alex" succefull created!
+		With hash
+
 		Im Alex
 		"""
 
-		data = {
-			"name": name,
-			"short_name": short_name
-		}
+		data = dict(author_name=name)
+		if author_url: 
+			data["author_url"] = author_url
 
+		if short_name:
+			data["short_name"] = short_name
+
+		data: Dict[str, str] = self.run(self.requests(api.createAccount, data=data))
+
+		self.short_name = data["short_name"]
+		self.author_name = data["author_name"]
+		self.author_url = data["author_url"]
+		self.access_token = data["access_token"]
+		self.auth_url = data["auth_url"]
+
+		if save_data:
+			import dbm
+
+			name = f"telegraph_data{self.hash}"
+
+			self.database = dbm.open(name) # Creating datafile
+			self.database = data
+
+		print(f'Account "{self.name}" succefull created!\nWith hash {self.hash}\n')
+
+	__aenter__ = __enter__ = __init__
+	__aexit__ = __exit__ = __del__
+
+	@contextmanager
+	@staticmethod
+	async def check_token(token: str) -> bool:
+		"""
+		Checking token for valid
+		:param token: String
+		:return: Boolean
+		"""
 		try:
-			with self.session.get(..., data=data) as response:
-				data: Dict[str, str] = response.json()
-
-			self.short_name = data["short_name"]
-			self.author_name = data["author_name"]
-			self.author_url = data["author_url"]
-			self.access_token = data["access_token"]
-			self.auth_url = data["auth_url"]
-
-			if save_data:
-				import dbm
-
-				name = f"telegraph_data{self.hash}"
-
-				self.database = dbm.open(name) # Creating datafile
-				self.database = data
-		except:
+			yield
+		finally:
 			pass
 
-		print(f'Account "{self.name}" succefull created!\nWith hash {self.hash}')
+	async def edit_account_info(self, **kwargs: Dict[str, Any]) -> dict:
+		data = dict(access_token=self.access_token, **kwargs)
 
-		@contextmanager
-		@staticmethod
-		def check_token(token: str) -> bool:
-			"""
-			Checking token for valid
-			:param token: String
-			:return: Boolean
-			"""
-			try:
-				yield
-			finally:
-				pass
+		data = await self.requests(api.editAccountInfo, data=data)
+		return data
+		
+	async def revoke_access_token(self):
+		data = {"access_token": self.access_token}
 
-		def __del__(self):
-			"""Deleting Client"""
-			del self.database
-			del self
+		data = await self.requests(api.revokeAccessToken, data=data)
+		return data
 
-		def __getitem__(self, item: str) -> Any:
-			"""
-			Getting item from config
-			:param item: String
-			:return: :obj:`Any`
-			"""
-			return self.conf.get(item)
+	def __del__(self):
+		"""Deleting Client"""
+		del self.database
+		del self
 
-		def __hash__(self) -> str:
-			"""
-			:return: String
-			"""
-			return self.hash
+	def __getitem__(self, item: str) -> Any:
+		"""
+		Getting item from config
+		:param item: String
+		:return: :obj:`Any`
+		"""
+		return self.conf.get(item)
 
-		__int__ = __hash__
+	def __hash__(self) -> str:
+		"""
+		:return: String
+		"""
+		return self.hash
 
-		def __repr__(self) -> str:
-			"""
-			:return: String
-			"""
-			return f"<Client {repr(self.hash)}>"
+	__int__ = __hash__
 
-		__str__ = __repr__
+	def __repr__(self) -> str:
+		"""
+		:return: String
+		"""
+		return f"<Client {repr(self.hash)}>"
+
+	__str__ = __repr__

@@ -2,9 +2,16 @@ from .client import Client
 from types import Post
 from .api import api
 from .utils.regexp import get_entities
-from .utils.exceptions import ServerError
+from .utils import baseObject
 
-class Poster:
+
+def add_content(text: str, data: dict):
+	for content in get_entities(text):
+		data_ = dict(tag=content[0], children=[content[1]])
+		data["content"].append(data_)
+
+
+class Poster(baseObject):
 	def __init__(self, client: Client):
 		"""
 		Initialisation poster
@@ -14,6 +21,7 @@ class Poster:
 			raise TypeError(f"Client must be type Client, not {type(client).__name__}")
 
 		self.client: Client = client
+		self.session = self.client.session
 
 	async def create_post(self, title: str, text: str) -> Post:
 		"""
@@ -24,32 +32,20 @@ class Poster:
 		:return: :obj:`Post`
 		"""
 
-		if not title.istitle():
-			title = title.title()
-
 		data = {
-			"access_token": self.client.token,
-			"title": title,
+			"access_token": self.client.access_token,
+			"title": title.title(),
 			"author_name": self.client.name,
 			"content": [],
 			"return_content": "true"
 		}
 
-		for content in get_entities(text):
-			data = dict(tag=content[0], children=[content[1]])
-			data["content"].append(data)
+		add_content(text, data)
 
-		try:
-			async with self.client.session.get(api.createPage, data=data) as response:
-				response = response
+		data = await self.requests(api.createPage, data)
+		return Post(**data)
 
-		except Exception as e:
-			raise ServerError(str(e))
-
-		data = await response.json()
-		return Post(**data["result"])
-
-	async def edit_post(self, id: str) -> Post:
+	async def edit_post(self, patch: str, *, title: str, text: str) -> Post:
 		"""
 		Method edit post
 
@@ -57,15 +53,40 @@ class Poster:
 		:return: :obj:`Post`
 		"""
 		data = {
-			"access_token": self.client.token
+			"access_token": self.client.access_token,
+			"author_url": self.author_url,
+			"author_name": self.author_name
+			"patch": patch,
+			"title": title,
+			"content": [],
+			"return_content": "true"
 		}
 
-		try:
-			async with self.client.session.get(api.editPage, data=data) as response:
-				response = response
+		add_content(text, data)
 
-		except Exception as e:
-			raise ServerError(str(e))
+		data = await self.requests(api.editPage, data)
+		return Post(**data)
 
-		data = await response.json()
-		return Post(**data["result"])
+	async def get_page(self, patch: str) -> Post:
+		"""
+		Method get_page
+		:param patch: URL
+		:return: :obj:`Post`
+		"""
+		data = {
+			"patch": patch,
+			"return_content": "true"
+		}
+
+		data = await self.requests(api.getPage, data)
+		return Post(**data)
+
+	async def get_page_list(self, offset: int=0, limit: int=50):
+		data = {
+			"access_token": self.client.access_token,
+			"offset": offset,
+			"limit": limit
+		}
+
+		data = await self.requests(api.getPageList, data)
+		return Post(**data)

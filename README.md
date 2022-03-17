@@ -12,14 +12,14 @@
 from telegraph_api import Client, Poster
 
 with Client("Alex") as client:
-	  poster = Poster(client)
+  poster = Poster(client)
 
 async def main():
-    post = await poster.create_post(
-        "Simple Page", 
-        "It's simple page in <b>Telegraph</b> with use <b>HTML</b>!")
+  post = await poster.create_post(
+    "Simple Page", 
+    "It's simple page in <b>Telegraph</b> with use <b>HTML</b>!")
 
-    print(post.text)
+  print(post.text)
 
 poster.run(main())
 # Output: It's simple page in <b>Telegraph</b> with use <b>HTML</b>!
@@ -28,7 +28,7 @@ poster.run(main())
 
 <details>
   <summary>Poster</summary>
-  
+
 ### Page downloader
 
 ```python

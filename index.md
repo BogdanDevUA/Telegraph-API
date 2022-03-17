@@ -1,37 +1,53 @@
-## Welcome to GitHub Pages
+# Telegraph-API
 
-You can use the [editor on GitHub](https://github.com/BogdanDevUA/Telegraph-API/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+- It's _very simple_ lib for authomatic posting in [**Telegraph**](https://telegra.ph/)
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+## Examples
 
-### Markdown
+<details>
+  <summary>Client</summary>
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+### Simple Client
 
-```markdown
-Syntax highlighted code block
+```python
+from telegraph_api import Client, Poster
 
-# Header 1
-## Header 2
-### Header 3
+with Client("Alex") as client:
+  poster = Poster(client)
 
-- Bulleted
-- List
+async def main():
+  post = await poster.create_post(
+    "Simple Page", 
+    "It's simple page in <b>Telegraph</b> with use <b>HTML</b>!")
 
-1. Numbered
-2. List
+  print(post.text)
 
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+poster.run(main())
+# Output: It's simple page in <b>Telegraph</b> with use <b>HTML</b>!
 ```
 
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+</details>
 
-### Jekyll Themes
+<details>
+  <summary>Poster</summary>
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/BogdanDevUA/Telegraph-API/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+### Page downloader
 
-### Support or Contact
+```python
+from telegraph_api import Client, Poster
+from telegraph_api.types import Post
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+client = Client("Alex")
+poster = Poster(client)
+
+page = "https://telegra.ph/Simple-page-02-10"
+
+async def main(page: str) -> Post:
+  return await poster.get_page(page)
+
+poster.run(main(page))
+
+# Out: ...
+```
+
+</details>

@@ -2,11 +2,6 @@
 
 - It's _very simple_ lib for authomatic posting in [**Telegraph**](https://telegra.ph/)
 
-## Examples
-
-<details>
-  <summary>Client</summary>
-
 ### Simple Client
 
 ```python
@@ -26,12 +21,7 @@ poster.run(main())
 # Output: It's simple page in <b>Telegraph</b> with use <b>HTML</b>!
 ```
 
-</details>
-
-<details>
-  <summary>Poster</summary>
-
-### Page downloader
+### Simple Poster
 
 ```python
 from telegraph_api import Client, Poster
@@ -49,5 +39,3 @@ poster.run(main(page))
 
 # Out: ...
 ```
-
-</details>

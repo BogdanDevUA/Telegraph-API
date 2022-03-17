@@ -5,10 +5,10 @@ from asyncio import AbstractEventLoop as Loop
 from contextlib import contextmanager
 #from urllib.parse import urlencode
 from secrets import token_hex
-from .utils import baseObject
+from .utils import BaseObject
 import asyncio
 
-class Client(baseObject):
+class Client(BaseObject):
 	def __init__(self, 
 				name: str, 
 				short_name: Optional[str]=None, *, 
@@ -97,9 +97,6 @@ class Client(baseObject):
 
 		print(f'Account "{self.name}" succefull created!\nWith hash {self.hash}\n')
 
-	__aenter__ = __enter__ = __init__
-	__aexit__ = __exit__ = __del__
-
 	@contextmanager
 	@staticmethod
 	async def check_token(token: str) -> bool:
@@ -129,6 +126,9 @@ class Client(baseObject):
 		"""Deleting Client"""
 		del self.database
 		del self
+
+	__aenter__ = __enter__ = __init__
+	__aexit__ = __exit__ = __del__
 
 	def __getitem__(self, item: str) -> Any:
 		"""

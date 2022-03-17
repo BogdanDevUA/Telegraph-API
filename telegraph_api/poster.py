@@ -2,7 +2,7 @@ from .client import Client
 from types import Post
 from .api import api
 from .utils.regexp import get_entities
-from .utils import baseObject
+from .utils import BaseObject
 
 
 def add_content(text: str, data: dict):
@@ -11,7 +11,7 @@ def add_content(text: str, data: dict):
 		data["content"].append(data_)
 
 
-class Poster(baseObject):
+class Poster(BaseObject):
 	def __init__(self, client: Client):
 		"""
 		Initialisation poster
@@ -55,7 +55,7 @@ class Poster(baseObject):
 		data = {
 			"access_token": self.client.access_token,
 			"author_url": self.author_url,
-			"author_name": self.author_name
+			"author_name": self.author_name,
 			"patch": patch,
 			"title": title,
 			"content": [],

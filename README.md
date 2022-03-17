@@ -3,6 +3,7 @@
 - It's _very simple_ lib for authomatic posting in [**Telegraph**](https://telegra.ph/)
 
 ## Examples
+
 <details>
   <summary>Client</summary>
 
@@ -24,6 +25,7 @@ async def main():
 poster.run(main())
 # Output: It's simple page in <b>Telegraph</b> with use <b>HTML</b>!
 ```
+
 </details>
 
 <details>
@@ -44,5 +46,8 @@ async def main(page: str) -> Post:
   return await poster.get_page(page)
 
 poster.run(main(page))
+
+# Out: ...
 ```
+
 </details>

@@ -1,12 +1,13 @@
 from .exceptions import ServerError
+from ..api import api
 
-class baseObject:
+class BaseObject:
 	def __init__(self):
 		pass
 
 	async def requests(self, method: api, data: dict) -> dict:
 		"""
-		Method requests
+		Method `requests`
 		:param method: :obj:`api`
 		:param data: Dictonary
 		"""
@@ -19,9 +20,13 @@ class baseObject:
 		data = await response.json()
 		return data.get("result") or data
 
-	def run(self, req: self.requests) -> dict:
+	def run(self, req) -> dict:
+		"""
+		Method `run`
+		:param req: :obj:`BaseObject.requests`
+		"""
 		if not isinstance(req, self.requests):
 			raise TypeError(f"req must be type baseObject.requests, not {type(req).__name__}")
 
-		return self.loop.run_until_complete(requests)
+		return self.loop.run_until_complete(req)
 		

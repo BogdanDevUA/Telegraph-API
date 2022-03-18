@@ -12,13 +12,12 @@
 ```python
 from telegraph_api import Client, Poster
 
-with Client("Alex") as client:
-  poster = Poster(client)
-
 async def main():
-  post = await poster.create_post(
-    "Simple Page", 
-    "It's simple page in <b>Telegraph</b> with use <b>HTML</b>!")
+  with Client("Alex") as client:
+    poster = Poster(client)
+    post = await poster.create_post(
+      "Simple Page", 
+      "It's simple page in <b>Telegraph</b> with use <b>HTML</b>!")
 
   print(post.text)
 

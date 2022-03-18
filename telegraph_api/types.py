@@ -1,8 +1,15 @@
-from typing import Dict, Any
-from dataclasses import dataclass
+from typing import Union, Dict
 
-@dataclass
-class Post:
+__all__ = ("Post")
+
+Any = Union[str, int, list, dict]
+
+class Data:
+	def __init__(self, **kwargs: Dict[str, Any]):
+		for key in kwargs:
+			setattr(self, key, kwargs[key])
+
+class Post(Data):
 	"""
 	Type Post
 	:param text: String
@@ -10,7 +17,3 @@ class Post:
 	:param url: String
 	:param entities: :obj:`Dict[str, Any]`
 	"""
-	text: str
-	id: str
-	url: str
-	entities: Dict[str, Any]

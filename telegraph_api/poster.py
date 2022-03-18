@@ -15,21 +15,33 @@ class Poster(BaseObject):
 	def __init__(self, client: Client):
 		"""
 		Initialisation poster
-		:param client: :obj:`Client`
+
+		param client: :obj:`Client`
 		"""
 		if not isinstance(client, Client):
 			raise TypeError(f"Client must be type Client, not {type(client).__name__}")
 
 		self.client: Client = client
-		self.session = self.client.session
+		self.session = client.session
+		self.loop = client.loop
+
+	def __enter__(self, client: Client) -> object:
+		self.__init__(client)
+		return self
+
+	def __del__(self, *_):
+		del self
+
+	__aenter__ = __enter__
+	__aexit__ = close = __exit__ = __del__
 
 	async def create_post(self, title: str, text: str) -> Post:
 		"""
-		Method create post
+		Method `create_post`
 
-		:param title: String
-		:param text: String
-		:return: :obj:`Post`
+		param title: `String`
+		param text: `String`
+		return: :obj:`Post`
 		"""
 
 		data = {
@@ -47,10 +59,10 @@ class Poster(BaseObject):
 
 	async def edit_post(self, patch: str, *, title: str, text: str) -> Post:
 		"""
-		Method edit post
+		Method `edit_post`
 
-		:param id: String
-		:return: :obj:`Post`
+		param id: `String`
+		return: :obj:`Post`
 		"""
 		data = {
 			"access_token": self.client.access_token,
@@ -69,9 +81,10 @@ class Poster(BaseObject):
 
 	async def get_page(self, patch: str) -> Post:
 		"""
-		Method get_page
-		:param patch: URL
-		:return: :obj:`Post`
+		Method `get_page`
+		
+		param patch: `URL`
+		return: :obj:`Post`
 		"""
 		data = {
 			"patch": patch,
@@ -82,6 +95,13 @@ class Poster(BaseObject):
 		return Post(**data)
 
 	async def get_page_list(self, offset: int=0, limit: int=50):
+		"""
+		Method `get_page_list`
+
+		param offset: `Integer`
+		param limit: `Integer`
+		return: `UNKOWN`
+		"""
 		data = {
 			"access_token": self.client.access_token,
 			"offset": offset,

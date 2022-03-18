@@ -6,7 +6,9 @@ from contextlib import contextmanager
 #from urllib.parse import urlencode
 from secrets import token_hex
 from .utils import BaseObject
-import asyncio
+from asyncio import get_event_loop
+
+__all__ = ("Client")
 
 class Client(BaseObject):
 	def __init__(self, 
@@ -16,22 +18,30 @@ class Client(BaseObject):
 				save_data: bool=True,
 				loop: Optional[Loop]=None,
 				timeout: Union[ClientTimeout, int]=10,
-				check_token: bool=True,
 				**conf: Dict[str, Any]
 				):
 		"""
 		Initialise Client
-		:param name: String
-		:param short_name: :obj:`Optional[str]`
-		:param author_url: String
-		:param save_data: Boolean
-		:param loop: :obj:`Optional[AbstractEventLoop]`
-		:param timeout: :obj:`Union[ClientTimeout, int]`
-		:param check_token: Boolean
-		:param conf: :obj:`Dict[str, Any]`
+
+		param name: `String`
+		param short_name: :obj:`Optional[str]`
+		param author_url: `String`
+		param save_data: `Boolean`
+		param loop: :obj:`Optional[AbstractEventLoop]`
+		param timeout: :obj:`Union[ClientTimeout, int]`
+		param conf: :obj:`Dict[str, Any]`
 		"""
+
+		# == Checking ============================================================================
 		if not isinstance(name, str):
 			raise TypeError(f"name must be type str, not {type(name).__name__}")
+
+		if len(name) > 128:
+			raise TypeError(f"lenght name must be 128 >, not {len(name)}")
+
+		if short_name:
+			if len(short_name) > 32:
+				raise TypeError(f"lenght short_name must be 128 >, not {len(name)}")
 
 		if not isinstance(loop, Loop):
 			raise TypeError(f"loop must be type AbstractEventLoop, not  {type(loop).__name__}")
@@ -39,14 +49,14 @@ class Client(BaseObject):
 		if not isinstance(timeout, ClientTimeout):
 			timeout = ClientTimeout(total=timeout)
 
+		# =======================================================================================
+
 		self.name = name
 		self.short_name = short_name
-
 		self.timeout = timeout
-		self.hash = token_hex(5)
 
 		if not loop:
-			loop = asyncio.get_event_loop()
+			loop = get_event_loop()
 
 		self.loop = loop
 		self.session = ClientSession(
@@ -56,22 +66,9 @@ class Client(BaseObject):
 		)
 		print("Session created\n")
 		self.conf = conf
-		"""
-		Client example:
+		# Config ____^
 
-		>>> with Client("Alex") as client:
-		... 	poster = Poster(client)
-		...		post = poster.create_post(client["post1"])
-		...		print(post.text)
-		...
-		Session created
-
-		Account "Alex" succefull created!
-		With hash
-
-		Im Alex
-		"""
-
+		# == Pending requests ==============================
 		data = dict(author_name=name)
 		if author_url: 
 			data["author_url"] = author_url
@@ -79,7 +76,9 @@ class Client(BaseObject):
 		if short_name:
 			data["short_name"] = short_name
 
-		data: Dict[str, str] = self.run(self.requests(api.createAccount, data=data))
+		# ==================================================
+		req = self.requests(api.createAccount, data)
+		data: Dict[str, str] = self.run(req)
 
 		self.short_name = data["short_name"]
 		self.author_name = data["author_name"]
@@ -93,63 +92,48 @@ class Client(BaseObject):
 			name = f"telegraph_data{self.hash}"
 
 			self.database = dbm.open(name) # Creating datafile
-			self.database = data
 
-		print(f'Account "{self.name}" succefull created!\nWith hash {self.hash}\n')
-
-	@contextmanager
-	@staticmethod
-	async def check_token(token: str) -> bool:
+	def __enter__(self, **kwargs: Dict[str, Any]) -> object:
 		"""
-		Checking token for valid
-		:param token: String
-		:return: Boolean
+		Contextmanager
+
+		param **kwargs: :obj:`Dict[str, Any]`
+		return: :class:`Client`
 		"""
-		try:
-			yield
-		finally:
-			pass
+		self.__init__(**kwargs)
+		return self
 
-	async def edit_account_info(self, **kwargs: Dict[str, Any]) -> dict:
-		data = dict(access_token=self.access_token, **kwargs)
-
-		data = await self.requests(api.editAccountInfo, data=data)
-		return data
-		
-	async def revoke_access_token(self):
-		data = {"access_token": self.access_token}
-
-		data = await self.requests(api.revokeAccessToken, data=data)
-		return data
-
-	def __del__(self):
+	def __del__(self, *_):
 		"""Deleting Client"""
 		del self.database
 		del self
 
-	__aenter__ = __enter__ = __init__
-	__aexit__ = __exit__ = __del__
+	__aenter__ = __enter__
+	__aexit__ = close = __exit__ = __del__
+
+	async def edit_account_info(self, **kwargs: Dict[str, Any]) -> dict:
+		"""
+		Method `edit_account_info`
+
+		param **kwargs: :obj:`Dict[str, Any]`
+		return: `Dictonary`
+		"""
+		data = dict(access_token=self.access_token, **kwargs)
+
+		return await self.requests(api.editAccountInfo, data=data)
+		
+	async def revoke_access_token(self):
+		"""Method `revoke_access_token`"""
+		data = dict(access_token=self.access_token)
+
+		data = await self.requests(api.revokeAccessToken, data=data)
+		self.access_token = data["access_token"]
 
 	def __getitem__(self, item: str) -> Any:
 		"""
 		Getting item from config
-		:param item: String
-		:return: :obj:`Any`
+		
+		param item: `String`
+		return: :obj:`Any`
 		"""
 		return self.conf.get(item)
-
-	def __hash__(self) -> str:
-		"""
-		:return: String
-		"""
-		return self.hash
-
-	__int__ = __hash__
-
-	def __repr__(self) -> str:
-		"""
-		:return: String
-		"""
-		return f"<Client {repr(self.hash)}>"
-
-	__str__ = __repr__

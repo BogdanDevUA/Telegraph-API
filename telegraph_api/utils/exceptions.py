@@ -1,3 +1,5 @@
+__all__ = ("Error", "ServerError")
+
 class Error(Exception):
 	"""Base class for exceptions"""
 

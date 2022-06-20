@@ -12,6 +12,7 @@
 ```python
 from telegraph_api import Client, Poster
 
+poster = None
 async def main():
   with Client("Alex") as client:
     poster = Poster(client)

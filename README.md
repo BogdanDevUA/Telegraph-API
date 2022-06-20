@@ -42,10 +42,7 @@ poster = Poster(client)
 
 page = "https://telegra.ph/Simple-page-02-10"
 
-async def main(page: str) -> Post:
-  return await poster.get_page(page)
-
-poster.run(main(page))
+poster.run(poster.get_page(page))
 
 # Out: ...
 ```
